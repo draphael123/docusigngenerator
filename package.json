@@ -20,7 +20,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "bcryptjs": "^2.4.3",
-    "docusign-esign": "^8.5.0",
     "next": "14.2.5",
     "next-auth": "^4.24.7",
     "pdf-lib": "^1.17.1",
