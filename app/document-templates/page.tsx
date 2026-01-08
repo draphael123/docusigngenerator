@@ -1,7 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Layout from "@/components/Layout";
@@ -16,22 +14,12 @@ interface DocumentTemplate {
 }
 
 export default function DocumentTemplatesPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (session) {
-      fetchTemplates();
-    }
-  }, [session]);
+    fetchTemplates();
+  }, []);
 
   const fetchTemplates = async () => {
     try {
@@ -47,7 +35,7 @@ export default function DocumentTemplatesPage() {
     }
   };
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -55,10 +43,6 @@ export default function DocumentTemplatesPage() {
         </div>
       </Layout>
     );
-  }
-
-  if (!session) {
-    return null;
   }
 
   return (

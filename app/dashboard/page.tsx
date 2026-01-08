@@ -1,7 +1,5 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Layout from "@/components/Layout";
@@ -17,24 +15,14 @@ interface Request {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const [requests, setRequests] = useState<Request[]>([]);
   const [loading, setLoading] = useState(true);
   const [docusignConnected, setDocusignConnected] = useState(false);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (session) {
-      fetchRequests();
-      checkDocuSignConnection();
-    }
-  }, [session]);
+    fetchRequests();
+    checkDocuSignConnection();
+  }, []);
 
   const fetchRequests = async () => {
     try {
@@ -66,7 +54,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (status === "loading" || loading) {
+  if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -74,10 +62,6 @@ export default function DashboardPage() {
         </div>
       </Layout>
     );
-  }
-
-  if (!session) {
-    return null;
   }
 
   const getStatusColor = (status: string) => {

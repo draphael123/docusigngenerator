@@ -1,9 +1,8 @@
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Layout from "@/components/Layout";
 
 interface DocumentTemplate {
   id: string;
@@ -16,8 +15,6 @@ interface DocumentTemplate {
 }
 
 export default function NewRequestPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null);
   const [sourceType, setSourceType] = useState<"template" | "upload">("template");
@@ -30,16 +27,8 @@ export default function NewRequestPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/login");
-    }
-  }, [status, router]);
-
-  useEffect(() => {
-    if (session) {
-      fetchTemplates();
-    }
-  }, [session]);
+    fetchTemplates();
+  }, []);
 
   useEffect(() => {
     if (selectedTemplate) {
@@ -107,7 +96,7 @@ export default function NewRequestPage() {
         throw new Error(errorData.error || "Request failed");
       }
 
-      router.push("/dashboard");
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
@@ -115,64 +104,23 @@ export default function NewRequestPage() {
     }
   };
 
-  if (status === "loading") {
-    return <div className="p-8">Loading...</div>;
-  }
-
-  if (!session) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
-            <div className="flex">
-              <div className="flex-shrink-0 flex items-center">
-                <h1 className="text-xl font-bold">DocuSign Template Generator</h1>
-              </div>
-              <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-                <Link
-                  href="/dashboard"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/document-templates"
-                  className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  Document Templates
-                </Link>
-                <Link
-                  href="/requests/new"
-                  className="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
-                >
-                  New Request
-                </Link>
-              </div>
-            </div>
-          </div>
+    <Layout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Create New Template Request</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            All documents automatically include the Fountain standard header.
+          </p>
         </div>
-      </nav>
 
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Create New Template Request</h2>
-            <p className="mt-1 text-sm text-gray-600">
-              All documents automatically include the Fountain standard header.
-            </p>
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {error}
           </div>
+        )}
 
-          {error && (
-            <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="card p-6 space-y-6">
             {/* Source Selection */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -407,8 +355,7 @@ export default function NewRequestPage() {
             </div>
           </form>
         </div>
-      </main>
-    </div>
+      </Layout>
   );
 }
 

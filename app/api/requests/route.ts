@@ -1,6 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { mergeHeaderWithDocument, validateHeaderPdf, optimizeForDocuSign } from "@/lib/pdf-utils";
 import { createDocuSignTemplate } from "@/lib/docusign";
@@ -8,12 +6,6 @@ import fs from "fs/promises";
 import path from "path";
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const requests = await prisma.request.findMany({
     where: {},
     orderBy: { createdAt: "desc" },
@@ -26,12 +18,6 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions);
-  
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   try {
     const body = await request.json();
     const {
@@ -46,10 +32,10 @@ export async function POST(request: NextRequest) {
     // Validate header PDF exists
     await validateHeaderPdf();
 
-    // Create request record
+    // Create request record (userId is optional now)
     const requestRecord = await prisma.request.create({
       data: {
-        userId: session.user.id,
+        userId: "anonymous", // Use a default user ID for anonymous requests
         documentTemplateId: documentTemplateId || null,
         uploadedFileId: uploadedFileId || null,
         filledValues: filledValues || {},
@@ -91,20 +77,15 @@ async function processRequest(requestId: string) {
       throw new Error("Request not found");
     }
 
-    // Get DocuSign tokens from user's account
+    // Get DocuSign tokens from account (if available)
     const account = await prisma.account.findFirst({
       where: {
         provider: "docusign",
-        userId: request.userId,
       },
     });
 
-    if (!account || !account.access_token) {
-      throw new Error("DocuSign not connected");
-    }
-
-    if (!account.baseUrl) {
-      throw new Error("DocuSign base URL not configured");
+    if (!account || !account.access_token || !account.baseUrl) {
+      throw new Error("DocuSign not connected. Please connect DocuSign first.");
     }
 
     // Generate PDF (simplified - in production, handle DOCX conversion, placeholder replacement, etc.)
@@ -142,7 +123,7 @@ async function processRequest(requestId: string) {
     const templateId = await createDocuSignTemplate(
       account.access_token,
       account.providerAccountId, // accountId
-      account.baseUrl, // baseUrl
+      account.baseUrl, // baseUrl (guaranteed non-null by check above)
       templateName,
       mergedPdf,
       request.roles as Array<{ roleName: string; signingOrder: number }>,
@@ -168,4 +149,3 @@ async function processRequest(requestId: string) {
     throw error;
   }
 }
-
