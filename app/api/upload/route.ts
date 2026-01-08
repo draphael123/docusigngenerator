@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const fileType = formData.get("type") as string; // "template" or "request"
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -29,15 +30,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = path.join(process.cwd(), "uploads");
-    await mkdir(uploadsDir, { recursive: true });
+    // Determine storage directory based on file type
+    const storageDir = fileType === "template" 
+      ? path.join(process.cwd(), "templates")
+      : path.join(process.cwd(), "uploads");
+    
+    await mkdir(storageDir, { recursive: true });
 
     // Generate unique filename
     const fileId = randomUUID();
     const fileExtension = file.name.split(".").pop();
     const fileName = `${fileId}.${fileExtension}`;
-    const filePath = path.join(uploadsDir, fileName);
+    const filePath = path.join(storageDir, fileName);
 
     // Save file
     const bytes = await file.arrayBuffer();

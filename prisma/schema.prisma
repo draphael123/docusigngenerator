@@ -72,6 +72,7 @@ model Request {
   filledValues      Json             // Placeholder values filled by user
   roles             Json             // DocuSign roles configuration
   tabMap            Json             // Mapping of anchors to roles and tab types
+  docusignFriendly  Boolean          @default(false) // Optimize PDF for DocuSign
   generatedPdfPath  String?
   docusignTemplateId String?
   status            String           // pending, processing, completed, failed

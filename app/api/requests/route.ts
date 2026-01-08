@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../auth/[...nextauth]/route";
+import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { mergeHeaderWithDocument, validateHeaderPdf } from "@/lib/pdf-utils";
+import { mergeHeaderWithDocument, validateHeaderPdf, optimizeForDocuSign } from "@/lib/pdf-utils";
 import { createDocuSignTemplate } from "@/lib/docusign";
 import fs from "fs/promises";
 import path from "path";
@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
       filledValues,
       roles,
       tabMap,
+      docusignFriendly,
     } = body;
 
     // Validate header PDF exists
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
         filledValues: filledValues || {},
         roles: roles || [],
         tabMap: tabMap || [],
+        docusignFriendly: docusignFriendly || false,
         status: "pending",
       },
     });
@@ -122,7 +124,12 @@ async function processRequest(requestId: string) {
     }
 
     // Merge header
-    const mergedPdf = await mergeHeaderWithDocument(pdfBuffer);
+    let mergedPdf = await mergeHeaderWithDocument(pdfBuffer);
+
+    // Optimize for DocuSign if requested
+    if (request.docusignFriendly) {
+      mergedPdf = await optimizeForDocuSign(mergedPdf);
+    }
 
     // Save merged PDF
     const uploadsDir = path.join(process.cwd(), "uploads");

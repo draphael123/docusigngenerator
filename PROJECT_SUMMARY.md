@@ -51,7 +51,7 @@ A production-ready MVP web application for creating DocuSign templates programma
 - **Database**: PostgreSQL with Prisma ORM
 - **Auth**: NextAuth.js
 - **PDF**: pdf-lib for merging
-- **DocuSign**: docusign-esign SDK
+- **DocuSign**: REST API integration (no SDK dependency)
 
 ## File Structure
 

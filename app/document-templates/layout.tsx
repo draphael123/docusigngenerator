@@ -9,4 +9,3 @@ export default function DocumentTemplatesLayout({
 }) {
   return <SessionProvider>{children}</SessionProvider>;
 }
-
